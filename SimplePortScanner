@@ -1,0 +1,58 @@
+import socket
+import re
+from ipaddress import *
+
+
+def get_target():
+    target = input("Enter the IP address you'd like to scan: ")
+    while re.match("([0-9]{1,3}.){3}[0-9]{1,3}$", target) is None:
+        print("Please enter a correctly formatted IP address.")
+        target = input("Enter IP address you'd like to scan: ")
+    target = ip_address(target)
+    return target
+
+
+def get_ports():
+    ports = input("What ports to scan?:"
+                   + "\n" + "[1]: Common Ports (1-1024)"
+                   + "\n" + "[2]: All Ports"
+                   + "\n" + "[3]: Specific Ports"
+                   )
+    if ports == str(1):
+        print("Scanning common ports...")
+        ports = range(1, 1025)
+        return ports
+    elif ports == str(2):
+        print("Scanning all ports...")
+        ports = range(1, 65536)
+        return ports
+    elif ports == str(3):
+        ports = input("Enter the ports you'd like to scan, separated by commas: ").split(",")
+        lst = []
+        for i in ports:
+            port = int(i)
+            lst.append(port)
+        return lst
+    else:
+        print("[-] Please select an appropriate option.")
+        get_ports()
+
+
+def scan():
+    socket.setdefaulttimeout(.00001)
+    target = str(get_target())
+    ports = get_ports()
+    try:
+       for i in ports:
+           conn_skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+           result = conn_skt.connect_ex((target, i))
+           if result == 0:
+               print("[+]tcp %s is open on host %s" % (i, target))
+               conn_skt.close()
+           else:
+               print("[-]tcp %s is closed on host %s" % (i, target))
+    except socket.error as error:
+        pass
+
+
+scan()
